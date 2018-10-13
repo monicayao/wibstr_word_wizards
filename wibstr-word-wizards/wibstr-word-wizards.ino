@@ -5,18 +5,26 @@
 int board[3][3];
 int multiplier[3][3];
 
+//initialize button to switch 
+int inPin = 7; 
+
 // initialize 2 player scores 
 int player1Score = 0;
 int player2Score = 0;
+boolean player = true; //true=player1, false=player2
   
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
+
+  // declare pushbutton as input
+  pinMode(inPin, INPUT);
   
   // making the initial board
   for (int i=0; i<3; ++i){
     for (int j=0; j<3; ++j){
       board[i][j]=0;
+      multiplier[i][j]=0;
     }   
   }
 
@@ -35,6 +43,22 @@ void loop() {
   float volt1 = sensorValue1 * (5.0 / 1023.0);
   float volt2 = sensorValue2 * (5.0 / 1023.0);
 
+  val = digitalRead(inPin);  // read input value
+  
+  if (val == HIGH) {         // check if the input is HIGH (button released)
+    //when player1 ends their turn
+    if(player==true){
+      player1Score=sumScore(player1Score, volt0, volt1, volt2);
+      player=false;
+      
+    }
+    //when player2 ends their turn
+    else{
+      player2Score=sumScore(player2Score, volt0, volt1, volt2);
+      player=true;
+    }
+    //update score display code!
+  }
   
   
 }
@@ -66,4 +90,11 @@ int getScoreFromVoltage(int voltage) {
   else if (voltage ){
     return 0;
   }
+}
+
+// sum up the player score after button is pressed
+int sumScore (playerScore, v0, v1, v2){
+  //update with new code!
+  int totalScore=0;
+  return totalScore;
 }
