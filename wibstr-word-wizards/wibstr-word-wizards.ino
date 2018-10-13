@@ -3,8 +3,12 @@
 
 //CreateHashMap(scrabbleScores, int, int, 7);
 // initialize 2D arrays
-int board[3][3];
+int oldBoard[3][3];
+int newBoard[3][3];
 int multiplier[3][3];
+
+//initialize supply voltage that runs from 0, 1, 2
+int supply=0; 
 
 //initialize button to switch 
 int inPin = 7; 
@@ -24,10 +28,11 @@ void setup() {
   // declare pushbutton as input
   pinMode(inPin, INPUT);
   
-  // making the initial board
+  // making the initial boards
   for (int i=0; i<3; ++i){
     for (int j=0; j<3; ++j){
-      board[i][j]=0;
+      oldBoard[i][j]=0;
+      newBoard[i][j]=0;
       multiplier[i][j]=0;
     }   
   }
@@ -63,17 +68,28 @@ void loop() {
   float volt1 = sensorValue1 * (5.0 / 1023.0);
   float volt2 = sensorValue2 * (5.0 / 1023.0);
 
+  //update new board with new voltages, adjusted for white noise
+  if (volt0>0.10){
+    newBoard[supply][0]=getScoreFromVoltage(volt0);
+  }
+  else if (volt1>0.1){
+    newBoard[supply][1]=getScoreFromVoltage(volt1);
+  }
+  else if (volt2>0.1){
+    newBoard[supply][2]=getScoreFromVoltage(volt2);
+  }
+
   val = digitalRead(inPin);  // read input value
   
   if (val == HIGH) {         // check if the input is HIGH (button released)
     //when player1 ends their turn
     if(player==true){
-      player1Score=sumScore(player1Score, volt0, volt1, volt2);
+      player1Score=play1Score+sumScore(oldBoard, newBoard);
       player=false;  
     }
     //when player2 ends their turn
     else{
-      player2Score=sumScore(player2Score, volt0, volt1, volt2);
+      player2Score=player2Score+sumScore(oldBoard, newBoard);
       player=true;
     }
     
@@ -81,6 +97,17 @@ void loop() {
     lcd.print("Player 1 Score: "+player1Score);
     lcd.setCursor(0, 1);
     lcd.print("Player 2 Score: "+player2Score);     
+  }
+
+  //change the supply line
+  if (supply==0){
+    supply=1;
+  }
+  else if (supply==1){
+    supply=2;
+  }
+  else{
+    supply=0;
   }
   
   
@@ -116,9 +143,25 @@ int getScoreFromVoltage(int voltage) {
 }
 
 // sum up the player score after button is pressed
-int sumScore (playerScore, v0, v1, v2){
+int sumScore (oldB, newB){
   //update with new code! TODO implement with the analog
-  
   int totalScore=0;
+
+  for (int i=0; i<3; ++i){
+    for (int j=0; j<3; ++j){
+      if (oldBoard[i][j]!=newBoard[i][j]){
+        if (multiplier[i][j] != 0){
+          //account for multiplier, then add the new tile to total score
+          totalScore+=getScoreFromVoltage(newBoard[i][j])*multiplier[i][j];
+          multiplier[i][j]=0; //multiplier used, delete from multiply board
+        }
+        else{
+          //no multiplier, directly add new tile to the total score
+          totalScore+=getScoreFromVoltage(newBoard[i][j]);
+        }
+      }
+    }   
+  }
+  
   return totalScore;
 }
